@@ -1,10 +1,12 @@
 import autoc.autoc as autoc
 
 RUN_BASE_TEST = True
-
+freqs = []
+dataArr = []
 if RUN_BASE_TEST:
-    autoc.runBaseTest()
-
+    f,d = autoc.runBaseTest()
+    freqs.append(f)
+    dataArr.append(d)
 
 TEST_FILE_NAMES = ['Test_Vector_Rajan.wav',
                    'sin300hz.wav',
@@ -24,4 +26,6 @@ if len(TEST_FILE_NAMES) != len(TEST_FILE_DESCRIPTORS):
     print("The number of names and descriptors must match!")
 
 for filename,descriptor in zip(TEST_FILE_NAMES,TEST_FILE_DESCRIPTORS):
-    autoc.runTest(filename,descriptor)
+    f,d = autoc.runTest(filename,descriptor)
+    freqs.append(f)
+    dataArr.append(d)
