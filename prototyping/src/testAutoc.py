@@ -1,4 +1,4 @@
-import autoc
+import autoc.autoc as autoc
 
 RUN_BASE_TEST = True
 
