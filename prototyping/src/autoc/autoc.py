@@ -4,7 +4,7 @@ from scipy.io.wavfile import read
 import scipy.signal as signal
 from numpy.fft import fft, ifft
 
-TEST_DIR = '../testFiles/'
+TEST_DIR = '../../testFiles/'
 
 def processFrame(frame, Fs):
     portionlen = int(len(frame)/4) # 4
