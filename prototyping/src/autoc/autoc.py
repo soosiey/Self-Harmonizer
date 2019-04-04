@@ -71,14 +71,14 @@ def dataControl(data, Fs,test):
     plt.ylabel('Hz')
     plt.title('Detected Frequencies in Hz (' + str(frame_size) + ' length frames) for ' + test)
     plt.show()
-
+    return frequencies
 
 def simpleVector():
     Fs, data = read(TEST_DIR + 'test_vector.wav')
     if len(data.shape) > 1:
         data = np.mean(data, axis=1)
     plt.figure(figsize=(10, 20))
-    dataControl(data,Fs, 'simple voice')
+    return dataControl(data,Fs, 'simple voice'),data
 
 
 def otherVector(fname,descriptor='other sample'):
@@ -86,15 +86,17 @@ def otherVector(fname,descriptor='other sample'):
     if len(data.shape) > 1:
         data = np.mean(data, axis=1)
     plt.figure(figsize=(10, 20))
-    dataControl(data, Fs, descriptor)
+    return dataControl(data, Fs, descriptor),data
 
 
 def runBaseTest():
-    simpleVector()
+    return simpleVector()
 
 def runTest(fname,descriptor):
-    otherVector(fname,descriptor)
+    return otherVector(fname,descriptor)
 
 if __name__ == '__main__':
 
-    runBaseTest()
+    freqs = runBaseTest()
+    TEST_DIR = '../../testFiles'
+    print(freqs)
