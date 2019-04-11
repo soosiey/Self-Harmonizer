@@ -5,7 +5,7 @@ import scipy.signal as signal
 from numpy.fft import fft, ifft
 import copy
 
-TEST_DIR = '../../testFiles/'
+TEST_DIR = '../testFiles/'
 
 def processFrame(frame, Fs):
     portionlen = int(len(frame) / 4)  # 4
@@ -40,7 +40,7 @@ def processFrame(frame, Fs):
     return Fs / ipos if ival > .3 else 0
 
 
-def dataControl(data, Fs,test):
+def dataControl(data,plot, Fs,test):
     frame_size = int(Fs * .04)  # 1
     fn = Fs * 2
     crit = 900 / fn
@@ -89,8 +89,12 @@ def dataControl(data, Fs,test):
     for i in range(len(frequencies)):
         if(frequencies[i] < 30):
             frequencies[i] = 0
-    plt.plot(frequencies)
-    plt.show()
+    if(plot):
+        plt.plot(frequencies)
+        plt.xlabel('Frame Idx')
+        plt.ylabel('Frequency (Hz)')
+        plt.title('Frequency of frames for ' + test)
+        plt.show()
     return frequencies
 
 def simpleVector():
@@ -101,19 +105,20 @@ def simpleVector():
     return dataControl(data,Fs, 'simple voice'),data
 
 
-def otherVector(fname,descriptor='other sample'):
+def otherVector(fname,plot,descriptor='other sample'):
     Fs, data = read(TEST_DIR + fname)
     if len(data.shape) > 1:
         data = np.mean(data, axis=1)
-    plt.figure(figsize=(10, 20))
-    return dataControl(data, Fs, descriptor),data
+    if(plot):
+        plt.figure(figsize=(10, 20))
+    return dataControl(data,plot, Fs, descriptor),data,Fs
 
 
 def runBaseTest():
     return simpleVector()
 
-def runTest(fname,descriptor):
-    return otherVector(fname,descriptor)
+def runTest(fname,descriptor,plot):
+    return otherVector(fname,plot,descriptor)
 
 if __name__ == '__main__':
 

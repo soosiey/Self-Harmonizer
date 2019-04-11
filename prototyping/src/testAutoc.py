@@ -26,6 +26,6 @@ if len(TEST_FILE_NAMES) != len(TEST_FILE_DESCRIPTORS):
     print("The number of names and descriptors must match!")
 
 for filename,descriptor in zip(TEST_FILE_NAMES,TEST_FILE_DESCRIPTORS):
-    f,d = autoc.runTest(filename,descriptor)
+    f,d ,fs= autoc.runTest(filename,descriptor,True)
     freqs.append(f)
     dataArr.append(d)

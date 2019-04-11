@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.io.wavfile as spwav
 import scipy.signal as signal
 import matplotlib.pyplot as plt
 
@@ -66,7 +65,7 @@ circleFifths={'B0':{'F':31,'Next': 'F#1', 'Prev':'E4'},
            'C5':{'F':523,'Next':'G1','Prev':'F4'}
            }
 
-def synthesizeHarmony(data, epoch_marks_orig, freqs, F_s=44100, startNum=1):
+def synthesizeHarmony(data, epoch_marks_orig, freqs, looped,F_s=44100, startNum=1):
     N = len(data)
     if len(epoch_marks_orig) == 0:
         return np.zeros(N)
@@ -87,9 +86,15 @@ def synthesizeHarmony(data, epoch_marks_orig, freqs, F_s=44100, startNum=1):
         w *= len(freqs)
         w = int(w)
         target = freqs[w]
-        key, closestNote = min(notesFreq.items(), key=lambda kv: abs(kv[1] - target))
-        closestFreq = notesFreq[circleFifths[key]['Next']]
-        F_new = closestFreq * 1.5 * startNum
+        if looped == -1:
+            key, closestNote = min(notesFreq.items(), key=lambda kv: abs(kv[1] - target))
+        else:
+            key = looped
+        F_new = None
+        for j in range(startNum):
+            F_new = notesFreq[circleFifths[key]['Next']]
+            key = circleFifths[key]['Next']
+
         new_epoch_spacing = int(float(F_s) / F_new)
         if (target < 30):
             i += 1
@@ -118,7 +123,7 @@ def synthesizeHarmony(data, epoch_marks_orig, freqs, F_s=44100, startNum=1):
         winResponse = data[e - P_0: e + P_0 + 1] * window
         audio_out[i - P_0:i + P_0 + 1] = audio_out[i - P_0:i + P_0 + 1] + winResponse
         i += new_epoch_spacing
-    return audio_out
+    return (audio_out,key)
 
 def findEpochs(data,f,freqs):
     retVal = []
@@ -133,18 +138,48 @@ def findEpochs(data,f,freqs):
 
     epochsOrig = np.concatenate(retVal)
     return epochsOrig
-def runBaseTest(data,freqs,Fs):
 
-    frame_size = int(Fs * .04)
-    rate = int(frame_size / 4)
-    numFrames = int(len(data) / rate)
-    #count=0
-    first=True
+def superposition(arr,n):
+    for i in range(n):
+        arr[i] = arr[i] / n
+
+    l = len(arr[0])
+    ret = np.zeros(l)
+    for i in range(l):
+        s = 0
+        for j in range(n):
+            s+= arr[j][i]
+        ret[i] = s
+    return ret
+
+def superposition2(d,arr,n):
+    for i in range(n):
+        arr[i] = arr[i] / (n+1)
+
+    l = len(arr[0])
+    ret = np.zeros(l)
+    for i in range(l):
+        s = 0
+        for j in range(n):
+            s+= arr[j][i]
+        ret[i] = s
+    return ret + d/(n+1)
+
+def synthesize(data,freqs,Fs,numHarm=1,startNum=1):
+
+    synthFrames = []
     epochsOrig = findEpochs(data,Fs,freqs)
-    synthFrames = np.asarray(synthesizeHarmony(data,epochsOrig,freqs),dtype=np.int16)
-    spwav.write('output.wav', 44100, synthFrames)
-    print("outputted")
-
+    looped = -1
+    for i in range(numHarm):
+        ret = synthesizeHarmony(data,epochsOrig,freqs,looped,Fs,startNum)
+        synthFrames.append(np.asarray(ret[0],dtype=np.int16))
+        looped = ret[1]
+    synthFrames = np.array(synthFrames)
+    output1 = np.asarray(superposition(synthFrames,numHarm),dtype=np.int16)
+    output2 = np.asarray(superposition2(data,synthFrames,numHarm),dtype=np.int16)
+    #spwav.write('output.wav', Fs, np.asarray(output,dtype=np.int16))
+    print("Finished")
+    return output1,output2
 
 
 
@@ -153,5 +188,5 @@ if __name__=="__main__":
     import sys
     sys.path.append(".")
     from autoc import autoc as autoc
-    freqs, data =autoc.runTest("test_vector.wav","simple test")
-    runBaseTest(data,freqs,Fs=44100)
+    freqs, data, fs= autoc.runTest("maleHarvard.wav","simple test",True)
+    synthesize(data,freqs,Fs=fs,numHarm=1)
