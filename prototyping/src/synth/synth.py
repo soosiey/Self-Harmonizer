@@ -66,12 +66,14 @@ circleFifths={'B0':{'F':31,'Next': 'F#1', 'Prev':'E4'},
            }
 
 def synthesizeHarmony(data, epoch_marks_orig, freqs, looped,F_s=44100, startNum=1):
+    global prevFreq
     N = len(data)
     if len(epoch_marks_orig) == 0:
         return np.zeros(N)
     audio_out = np.zeros(N)
     # Suggested loop
     i = 0
+    newFs = []
     while i < N:
 
         # https://courses.engr.illinois.edu/ece420/lab5/lab/#overlap-add-algorithm
@@ -113,17 +115,16 @@ def synthesizeHarmony(data, epoch_marks_orig, freqs, looped,F_s=44100, startNum=
         winWidth = 2 * P_0 + 1
         if P_0 + i + 1 >= N or i - P_0 < 0:
             i += new_epoch_spacing
-
             continue
         if e + P_0 + 1 >= N or e - P_0 < 0:
             i += new_epoch_spacing
-
             continue
         window = np.hanning(winWidth)
         winResponse = data[e - P_0: e + P_0 + 1] * window
         audio_out[i - P_0:i + P_0 + 1] = audio_out[i - P_0:i + P_0 + 1] + winResponse
         i += new_epoch_spacing
-    return (audio_out,key)
+        newFs.append(F_new)
+    return (audio_out,key,newFs)
 
 def findEpochs(data,f,freqs):
     retVal = []
@@ -170,16 +171,19 @@ def synthesize(data,freqs,Fs,numHarm=1,startNum=1):
     synthFrames = []
     epochsOrig = findEpochs(data,Fs,freqs)
     looped = -1
+    newFreqs = []
     for i in range(numHarm):
         ret = synthesizeHarmony(data,epochsOrig,freqs,looped,Fs,startNum)
         synthFrames.append(np.asarray(ret[0],dtype=np.int16))
         looped = ret[1]
+        newFreqs.append(ret[2])
     synthFrames = np.array(synthFrames)
-    output1 = np.asarray(superposition(synthFrames,numHarm),dtype=np.int16)
-    output2 = np.asarray(superposition2(data,synthFrames,numHarm),dtype=np.int16)
+    print("Synthesis Finished")
+    return synthFrames,np.array(newFreqs)
+    #output1 = np.asarray(superposition(synthFrames,numHarm),dtype=np.int16)
+    #output2 = np.asarray(superposition2(data,synthFrames,numHarm),dtype=np.int16)
     #spwav.write('output.wav', Fs, np.asarray(output,dtype=np.int16))
-    print("Finished")
-    return output1,output2
+    #return output1,output2
 
 
 

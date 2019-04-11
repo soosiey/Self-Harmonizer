@@ -90,6 +90,7 @@ def dataControl(data,plot, Fs,test):
         if(frequencies[i] < 30):
             frequencies[i] = 0
     if(plot):
+        plt.figure(figsize=(10, 20))
         plt.plot(frequencies)
         plt.xlabel('Frame Idx')
         plt.ylabel('Frequency (Hz)')
@@ -109,8 +110,6 @@ def otherVector(fname,plot,descriptor='other sample'):
     Fs, data = read(TEST_DIR + fname)
     if len(data.shape) > 1:
         data = np.mean(data, axis=1)
-    if(plot):
-        plt.figure(figsize=(10, 20))
     return dataControl(data,plot, Fs, descriptor),data,Fs
 
 
