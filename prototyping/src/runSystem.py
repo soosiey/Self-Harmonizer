@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import synth.synth as synth
 import autoc.autoc as autoc
 import scipy.io.wavfile as spwav
