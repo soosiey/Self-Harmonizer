@@ -1,21 +1,15 @@
 import synth.synth as synth
+import autoc.autoc as autoc
+import scipy.io.wavfile as spwav
 
-RUN_BASE_TEST = True
-freqs = []
-dataArr = []
 
-if RUN_BASE_TEST:
-    f,d = autoc.runBaseTest()
-    freqs.append(f)
-    dataArr.append(d)
+testFile = 'test_vector.wav'
 
-TEST_FILE_NAMES = ['Test_Vector_Rajan.wav']
-TEST_FILE_DESCRIPTORS = ['Rajan Voice']
+freqs, data, fs = autoc.runTest(testFile,"simple test",True)
 
-if len(TEST_FILE_NAMES) != len(TEST_FILE_DESCRIPTORS):
-    print("The number of names and descriptors must match!")
+sFrames,newFreqs = synth.synthesize(data,freqs,fs,numHarm=1,startNum=2)
 
-for filename,descriptor in zip(TEST_FILE_NAMES,TEST_FILE_DESCRIPTORS):
-    f,d = synth.runTest(filename,freqs)
-    freqs.append(f)
-    dataArr.append(d)
+o1 = np.asarray(synth.superposition(sFrames,numHarm),dtype=np.int16)
+o2 = np.asarray(synth.superposition2(data,sFrames,numHarm),dtype=np.int16)
+spwav.write('SynthWithoutInput.wav',fs,noInputSynth)
+spwav.write('SynthWithInput.wav',fs,inputSynth)

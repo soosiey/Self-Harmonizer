@@ -1,4 +1,6 @@
 prototyping/src/__pycache__/*
 .idea
 prototyping/src/autoc/__pycache__/*
-prototyping/src/synth/__pychach__/*
+prototyping/src/synth/__pycache__/*
+prototyping/src/*.wav
+prototyping/src/synth/*.wav
