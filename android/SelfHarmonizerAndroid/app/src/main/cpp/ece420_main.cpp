@@ -24,7 +24,7 @@ Java_com_ece420_lab5_MainActivity_writeNewFreq(JNIEnv *env, jclass, jint);
 #define EPOCH_PEAK_REGION_WIGGLE 30
 #define VOICED_THRESHOLD 200000000
 #define FRAME_SIZE 1024
-#define BUFFER_SIZE (3 * FRAME_SIZE)
+#define BUFFER_SIZE (4 * FRAME_SIZE)
 #define F_S 48000
 float bufferIn[BUFFER_SIZE] = {};
 float bufferOut[BUFFER_SIZE] = {};
@@ -60,7 +60,28 @@ bool lab5PitchShift(float *bufferIn) {
         // *********************** START YOUR CODE HERE  **************************** //
 
 
+        float  new_epoch_spacing = F_S/FREQ_NEW;
+        while(newEpochIdx < 2 * FRAME_SIZE){
+            int e = findClosestInVector(epochLocations, newEpochIdx, 1, epochLocations.size() - 1);
+            int eNext = e + 1;
+            int ePrev = e - 1;
 
+            int P_0 = (epochLocations[eNext] - epochLocations[ePrev])/2;
+            int winSize = 2 * P_0 + 1;
+
+            float windowedResponse[winSize];
+            for(int i =0 ; i < winSize ; i++){
+                windowedResponse[i] = 0;
+
+            }
+            int j = 0;
+            for(int i = epochLocations[e] - P_0 ; i < epochLocations[e] + P_0 + 1 ; i++){
+                windowedResponse[j] = bufferIn[i] * getHanningCoef(winSize,j);
+                j++;
+            }
+            overlapAddArray(bufferOut, windowedResponse, newEpochIdx - P_0, winSize);
+            newEpochIdx += new_epoch_spacing;
+        }
 
 
 
@@ -86,7 +107,7 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
     gettimeofday(&start, NULL);
 
     // Get the new desired frequency from android
-    FREQ_NEW = FREQ_NEW_ANDROID;
+    //FREQ_NEW = FREQ_NEW_ANDROID;
 
     // Data is encoded in signed PCM-16, little-endian, mono
     int16_t data[FRAME_SIZE];
@@ -143,87 +164,31 @@ int detectBufferPeriod(float *buffer) {
         return -1;
     }
 
-    // FFT is done using Kiss FFT engine. Remember to free(cfg) on completion
-    kiss_fft_cfg cfg = kiss_fft_alloc(BUFFER_SIZE, false, 0, 0);
+    int portionLen = BUFFER_SIZE / 4;
 
-    kiss_fft_cpx buffer_in[BUFFER_SIZE];
-    kiss_fft_cpx buffer_fft[BUFFER_SIZE];
-
-    for (int i = 0; i < BUFFER_SIZE; i++) {
-        buffer_in[i].r = bufferIn[i];
-        buffer_in[i].i = 0;
-    }
-
-    kiss_fft(cfg, buffer_in, buffer_fft);
-    free(cfg);
-
-
-    // Autocorrelation is given by:
-    // autoc = ifft(fft(x) * conj(fft(x))
-    //
-    // Also, (a + jb) (a - jb) = a^2 + b^2
-    kiss_fft_cfg cfg_ifft = kiss_fft_alloc(BUFFER_SIZE, true, 0, 0);
-
-    kiss_fft_cpx multiplied_fft[BUFFER_SIZE];
-    kiss_fft_cpx autoc_kiss[BUFFER_SIZE];
-
-    for (int i = 0; i < BUFFER_SIZE; i++) {
-        multiplied_fft[i].r = (buffer_fft[i].r * buffer_fft[i].r)
-                              + (buffer_fft[i].i * buffer_fft[i].i);
-        multiplied_fft[i].i = 0;
-    }
-
-    kiss_fft(cfg_ifft, multiplied_fft, autoc_kiss);
-    free(cfg_ifft);
-
-    // Move to a normal float array rather than a struct array of r/i components
-    float autoc[BUFFER_SIZE];
-    for (int i = 0; i < BUFFER_SIZE; i++) {
-        autoc[i] = autoc_kiss[i].r;
-    }
-
-    // We're only interested in pitches below 1000Hz.
-    // Why does this line guarantee we only identify pitches below 1000Hz?
-    int minIdx = F_S / 1000;
-    int maxIdx = BUFFER_SIZE / 2;
-
-    int periodLen = findMaxArrayIdx(autoc, minIdx, maxIdx);
-    float freq = ((float) F_S) / periodLen;
-
-    // TODO: tune
-    if (freq < 50) {
-        periodLen = -1;
-    }
-
-    return periodLen;
-}
-
-float autoc(float *buffer) {
-    int portionLen = int(BUFFER_SIZE / 4);
-    float firstPortion[portionLen];
-    float thirdPortion[portionLen];
+    std::vector<float> firstPortion{};
+    std::vector<float> thirdPortion{};
+    float peak1=-1*INFINITY;
+    float peak2=-1*INFINITY;
     for (int i = 0; i<portionLen; i++){
-        firstPortion[i]=buffer[i];
+        firstPortion.push_back(buffer[i]);
+        if (buffer[i]>peak1)
+            peak1=buffer[i];
     }
-    for (int i = portionLen*3; i<BUFFER_SIZE; i++){
-        thirdPortion[i]=buffer[i];
+    for (int i = (BUFFER_SIZE-portionLen); i<BUFFER_SIZE; i++){
+        thirdPortion.push_back(buffer[i]);
+        if (buffer[i]>peak2)
+            peak2=buffer[i];
     }
-
-    float peak1 = *std::max(firstPortion, firstPortion+portionLen);
-    float peak2 = *std::max(thirdPortion, thirdPortion+portionLen);
 
     float clipping = (float)(.64 * std::min(peak1, peak2));
 
     // the following loop center clips and infinite clips at the same time
     float clippedFrame[BUFFER_SIZE];
     for (int i = 0; i<BUFFER_SIZE; i++){
-        clippedFrame[i]=buffer[i];
-    }
-
-    for (int i = 0; i<BUFFER_SIZE; i++){
-        if (clippedFrame[i] > clipping)
+        if (buffer[i] > clipping)
             clippedFrame[i] = 1;
-        else if (clippedFrame[i] < -clipping)
+        else if (buffer[i] < -clipping)
             clippedFrame[i] = -1;
         else
             clippedFrame[i] = 0;
@@ -264,33 +229,38 @@ float autoc(float *buffer) {
     free(cfg_ifft);
 
     // Move to a normal float array rather than a struct array of r/i components
-    float R[BUFFER_SIZE];
+    std::vector<float> R{};
     for (int i = 0; i < BUFFER_SIZE; i++) {
-        R[i] = autoc_kiss[i].r;
-    }
-
-    for (int i=0;i<BUFFER_SIZE;i++){
-        R[i]=std::abs(R[i]);
+        R.push_back(autoc_kiss[i].r);
     }
 
     float m = R[0];
 
     for (int i=0;i<BUFFER_SIZE;i++){
-        R[i]=R[i]/m;
+        R[i]=std::abs(R[i]/m);
+    }
+    //2304
+    //960
+    //
+    int first=(int)(0.42*portionLen);
+    int last=BUFFER_SIZE-portionLen;
+    int ipos=-100000000;
+    for (int i=first;i<last+1;i++){
+        if (R[i]>ipos)
+            ipos=i;
     }
 
-    int first=(int)(0.2*portionLen);
-    int last=(int)(3*portionLen);
-    int ipos = std::distance(R,std::max_element(R+first,R+last));
-
-    ipos += int(.2 * portionLen);
     float ival = R[ipos];
     float retVal = (F_S / ipos);
     if (retVal > 500)
-        return 0;
-    else if (ival > .3)
-        return F_S / ipos;
-    else return 0;
+        return -1;
+    if (ival > .3) {
+        FREQ_NEW=(int)(F_S/ipos*1.5);
+        //FREQ_NEW=600;
+        return ipos;
+    }
+    else return -1;
+
 }
 
 
