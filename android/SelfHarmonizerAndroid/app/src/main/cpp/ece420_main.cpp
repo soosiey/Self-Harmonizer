@@ -60,7 +60,7 @@ bool lab5PitchShift(float *bufferIn) {
         // *********************** START YOUR CODE HERE  **************************** //
 
 
-        float  new_epoch_spacing = F_S/FREQ_NEW;
+        int  new_epoch_spacing = F_S/FREQ_NEW;
         while(newEpochIdx < 2 * FRAME_SIZE){
             int e = findClosestInVector(epochLocations, newEpochIdx, 1, epochLocations.size() - 1);
             int eNext = e + 1;
@@ -242,24 +242,20 @@ int detectBufferPeriod(float *buffer) {
     //2304
     //960
     //
-    int first=(int)(0.42*portionLen);
-    int last=BUFFER_SIZE-portionLen;
+    int first=(int)(.4 * portionLen);
+    int last=(int)(3 * portionLen);
     int ipos=-100000000;
     for (int i=first;i<last+1;i++){
         if (R[i]>ipos)
             ipos=i;
     }
 
-    float ival = R[ipos];
     float retVal = (F_S / ipos);
-    if (retVal > 500)
+    if (retVal > 700) {
         return -1;
-    if (ival > .3) {
-        FREQ_NEW=(int)(F_S/ipos*1.5);
-        //FREQ_NEW=600;
-        return ipos;
     }
-    else return -1;
+    FREQ_NEW=(int)(F_S/ipos*1.5);
+    return ipos;
 
 }
 
