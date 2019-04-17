@@ -230,19 +230,23 @@ int detectBufferPeriod(float *buffer) {
 
     // Move to a normal float array rather than a struct array of r/i components
     std::vector<float> R{};
+    int m = 0;
     for (int i = 0; i < BUFFER_SIZE; i++) {
-        R.push_back(autoc_kiss[i].r);
+        if(i == 0){
+            m = autoc_kiss[i].r;
+        }
+        R.push_back(std::abs((autoc_kiss[i].r)/m));
     }
 
-    float m = R[0];
+    //float m = R[0];
 
-    for (int i=0;i<BUFFER_SIZE;i++){
-        R[i]=std::abs(R[i]/m);
-    }
+    //for (int i=0;i<BUFFER_SIZE;i++){
+    //    R[i]=std::abs(R[i]/m);
+    //}
     //2304
     //960
     //
-    int first=(int)(.4 * portionLen);
+    int first=(int)(.1 * portionLen);
     int last=(int)(3 * portionLen);
     int ipos=-100000000;
     for (int i=first;i<last+1;i++){
