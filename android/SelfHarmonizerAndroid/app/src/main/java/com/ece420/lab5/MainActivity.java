@@ -51,7 +51,7 @@ public class MainActivity extends Activity
     // Static Values
     private static final int AUDIO_ECHO_REQUEST = 0;
     private static final int FRAME_SIZE = 1024;
-    private static final int MIN_FREQ = 50;
+    private static final int MIN_FREQ = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,17 +73,17 @@ public class MainActivity extends Activity
 
         // Setup UI
         freq_status_view = (TextView) findViewById(R.id.newFreqStatusText);
-        freq_status_view.setText("Desired Output Frequency: 420 Hz");
+        freq_status_view.setText("Fifths Between Harmonies: 1");
         // Setup Seekbar and Initialize
         SeekBar mSeekbar = (SeekBar) findViewById(R.id.freqSeekBar);
-        mSeekbar.setProgress(420);
-        writeNewFreq(420);
+        mSeekbar.setProgress(0);
+        writeNewFreq(1);
         mSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener()
         {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
             {
                 int newFreq = progress + MIN_FREQ;
-                freq_status_view.setText("Desired Output Frequency: " + Integer.toString(newFreq) + " Hz");
+                freq_status_view.setText("Fifths Between Harmonies: " + Integer.toString(newFreq));
                 writeNewFreq(newFreq);
             }
 

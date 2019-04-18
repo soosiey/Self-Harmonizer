@@ -32,7 +32,7 @@ int newEpochIdx = FRAME_SIZE;
 
 // We have two variables here to ensure that we never change the desired frequency while
 // processing a frame. Thread synchronization, etc. Setting to 300 is only an initializer.
-int FREQ_NEW_ANDROID = 300;
+int NumFifths = 1;
 int FREQ_NEW = 300;
 
 bool lab5PitchShift(float *bufferIn) {
@@ -258,7 +258,7 @@ int detectBufferPeriod(float *buffer) {
     if (retVal > 700) {
         return -1;
     }
-    FREQ_NEW=(int)(F_S/ipos*1.5);
+    FREQ_NEW=(int)((F_S/ipos)*1.5*NumFifths);
     return ipos;
 
 }
@@ -323,6 +323,6 @@ void overlapAddArray(float *dest, float *src, int startIdx, int len) {
 
 JNIEXPORT void JNICALL
 Java_com_ece420_lab5_MainActivity_writeNewFreq(JNIEnv *env, jclass, jint newFreq) {
-    FREQ_NEW_ANDROID = (int) newFreq;
+    NumFifths = (int) newFreq;
     return;
 }

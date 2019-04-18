@@ -40,17 +40,19 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginTop="44dp"
-        android:max="849" />
+        android:layout_marginStart="64dp"
+        android:layout_marginTop="78dp"
+        android:max="4" />
 
     <TextView
         android:id="@+id/newFreqStatusText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/freqSeekBar"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="38dp"
-        android:text="Desired Output Frequency:"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="73dp"
+        android:layout_marginTop="-62dp"
+        android:text="Fifths Between Harmonies: "
         android:textAppearance="@android:style/TextAppearance.Material.Large" />
 
 </RelativeLayout>
