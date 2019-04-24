@@ -34,20 +34,20 @@ std::map<std::string, int> notesFreq = {{"B0",31},{"C1",33},{"C#1",35},{"D1",37}
                                    {"B4",494},{"C5",523}};
 
 // Dictionary for Circle of Fifths
-std::map<std::string, std::map<std::string, std::string>> circleFifths = {
+std::map<std::string, std::string> circleFifths = {
 {"B0","F#1"}, {"C1","G1"}, {"C#1","G#1"}, {"D1","A1"}, {"D#1","A#1"}, {"E1","B1"}, {"F1","C2"}, {"F#1","C#2"}, {"G1","D2"},
 {"G#1","D#2"}, {"A1","E2"}, {"A#1","F2"}, {"B1","F#2"}, {"C2","G2"}, {"C#2","G#2"}, {"D2","A2"}, {"D#2","A#2"}, {"E2","B2"},
 {"F2","C3"}, {"F#2","C#3"}, {"G2","D3"}, {"G#2","D#3"}, {"A2","E3"}, {"A#2","F3"}, {"B2","F#3"}, {"C3","G3"}, {"C#3","G#3"},
 {"D3","A3"}, {"D#3","A#3"}, {"E3","B3"}, {"F3","C4"}, {"F#3","C#4"}, {"G3","D4"}, {"G#3","D#4"}, {"A3","E4"}, {"A#3","F4"},
 {"B3","F#4"}, {"C4","G4"}, {"C#4","G#4"}, {"D4","A4"}, {"D#4","A#4"}, {"E4","B4"}, {"F4","C5"}, {"F#4","C#1"}, {"G4","D1"},
-{"G#4","D#1"}, {"A4","E1"}, {"A#4","F1"}, {"B4","F#1"}, {"C5","G1"}}};
+{"G#4","D#1"}, {"A4","E1"}, {"A#4","F1"}, {"B4","F#1"}, {"C5","G1"}};
 
 
 // Student Variables
 #define EPOCH_PEAK_REGION_WIGGLE 30
 #define VOICED_THRESHOLD 200000000
 #define FRAME_SIZE 1024
-#define BUFFER_SIZE (4 * FRAME_SIZE)
+#define BUFFER_SIZE (3 * FRAME_SIZE)
 #define F_S 48000
 float bufferIn[BUFFER_SIZE] = {};
 float bufferOut[BUFFER_SIZE] = {};
@@ -63,6 +63,32 @@ bool lab5PitchShift(float *bufferIn) {
     // Lab 4 code is condensed into this function
     int periodLen = detectBufferPeriod(bufferIn);
     float freq = ((float) F_S) / periodLen;
+
+    std::vector<std::string> harmonies;
+    std::map<std::string, int>::iterator it;
+    int mindiff=100000000;
+
+    std::string key="";
+    for (it=notesFreq.begin();it!=notesFreq.end();it++){
+        int val=it->second;
+        int diff=std::abs(freq-val);
+        if (diff<mindiff){
+            key=it->first;
+            mindiff=diff;
+        }
+    }
+
+    std::string harmkey=key;
+    for (int j=0;j<NumHarm;j++) {
+        for (int i = 0; i < NumFifths; i++) {
+            harmkey = circleFifths[harmkey];
+        }
+        harmonies.push_back(harmkey);
+    }
+
+
+
+    //FREQ_NEW=600;
 
     // If voiced
     if (periodLen > 0) {
@@ -82,34 +108,40 @@ bool lab5PitchShift(float *bufferIn) {
         // findClosestInVector();
         // overlapAndAdd();
         // *********************** START YOUR CODE HERE  **************************** //
+        int changeIdx=0;
+        for (int k=0;k<NumHarm;k++){
+            FREQ_NEW=notesFreq[harmonies[k]];
+            float bufferTemp[BUFFER_SIZE]={};
+            int  new_epoch_spacing = F_S/FREQ_NEW;
+            int saveEpochIdx=newEpochIdx;
+            while(newEpochIdx < 2 * FRAME_SIZE){
+                int e = findClosestInVector(epochLocations, newEpochIdx, 1, epochLocations.size() - 1);
+                int eNext = e + 1;
+                int ePrev = e - 1;
 
+                int P_0 = (epochLocations[eNext] - epochLocations[ePrev])/2;
+                int winSize = 2 * P_0 + 1;
 
-        int  new_epoch_spacing = F_S/FREQ_NEW;
-        while(newEpochIdx < 2 * FRAME_SIZE){
-            int e = findClosestInVector(epochLocations, newEpochIdx, 1, epochLocations.size() - 1);
-            int eNext = e + 1;
-            int ePrev = e - 1;
+                float windowedResponse[winSize];
+                for(int i =0 ; i < winSize ; i++){
+                    windowedResponse[i] = 0;
 
-            int P_0 = (epochLocations[eNext] - epochLocations[ePrev])/2;
-            int winSize = 2 * P_0 + 1;
-
-            float windowedResponse[winSize];
-            for(int i =0 ; i < winSize ; i++){
-                windowedResponse[i] = 0;
-
+                }
+                int j = 0;
+                for(int i = epochLocations[e] - P_0 ; i < epochLocations[e] + P_0 + 1 ; i++){
+                    windowedResponse[j] = bufferIn[i] * getHanningCoef(winSize,j);
+                    j++;
+                }
+                overlapAddArray(bufferTemp, windowedResponse, newEpochIdx - P_0, winSize);
+                newEpochIdx += new_epoch_spacing;
+                changeIdx=newEpochIdx;
             }
-            int j = 0;
-            for(int i = epochLocations[e] - P_0 ; i < epochLocations[e] + P_0 + 1 ; i++){
-                windowedResponse[j] = bufferIn[i] * getHanningCoef(winSize,j);
-                j++;
+            newEpochIdx=saveEpochIdx;
+            for (int i=0;i<BUFFER_SIZE;i++){
+                bufferOut[i] += bufferTemp[i]/(float)NumHarm;
             }
-            overlapAddArray(bufferOut, windowedResponse, newEpochIdx - P_0, winSize);
-            newEpochIdx += new_epoch_spacing;
         }
-
-
-
-
+        newEpochIdx=changeIdx;
 
         // ************************ END YOUR CODE HERE  ***************************** //
     }
@@ -188,7 +220,7 @@ int detectBufferPeriod(float *buffer) {
         return -1;
     }
 
-    int portionLen = BUFFER_SIZE / 4;
+    int portionLen = BUFFER_SIZE / 6;
 
     std::vector<float> firstPortion{};
     std::vector<float> thirdPortion{};
@@ -257,32 +289,31 @@ int detectBufferPeriod(float *buffer) {
     int m = 0;
     for (int i = 0; i < BUFFER_SIZE; i++) {
         if(i == 0){
-            m = autoc_kiss[i].r;
+            m = std::sqrt(autoc_kiss[i].r*autoc_kiss[i].r+autoc_kiss[i].i*autoc_kiss[i].i);
         }
-        R.push_back(std::abs((autoc_kiss[i].r)/m));
+        R.push_back(std::sqrt(autoc_kiss[i].r*autoc_kiss[i].r+autoc_kiss[i].i*autoc_kiss[i].i)/m);
     }
 
-    //float m = R[0];
 
-    //for (int i=0;i<BUFFER_SIZE;i++){
-    //    R[i]=std::abs(R[i]/m);
-    //}
-    //2304
-    //960
-    //
-    int first=(int)(.1 * portionLen);
-    int last=(int)(3 * portionLen);
+    //int first=(int)(.4 * portionLen);
+    int first=87;
+    //int last=(int)(3 * portionLen);
+    int last=1600;
+
     int ipos=-100000000;
+    float ival=-100000000;
     for (int i=first;i<last+1;i++){
-        if (R[i]>ipos)
-            ipos=i;
+        if (R[i]>ival) {
+            ival = R[i];
+            ipos = i;
+        }
     }
 
     float retVal = (F_S / ipos);
-    if (retVal > 700) {
+    if ((retVal > 550)||(ival<0.3)) {
         return -1;
     }
-    FREQ_NEW=(int)((F_S/ipos)*1.5*NumFifths*NumHarm);
+
     return ipos;
 
 }
