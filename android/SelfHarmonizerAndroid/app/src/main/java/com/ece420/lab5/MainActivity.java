@@ -44,6 +44,7 @@ public class MainActivity extends Activity
     Button   controlButton;
     TextView statusView;
     TextView freq_status_view;
+    TextView freq_status_view2;
     String  nativeSampleRate;
     String  nativeSampleBufSize;
     boolean supportRecording;
@@ -90,6 +91,27 @@ public class MainActivity extends Activity
             public void onStartTrackingTouch(SeekBar seekBar) {}
             public void onStopTrackingTouch(SeekBar seekBar) {}
         });
+
+        // Setup UI 2
+        freq_status_view2 = (TextView) findViewById(R.id.newFreqStatusText2);
+        freq_status_view2.setText("Number of Harmonies: 1");
+        // Setup Seekbar and Initialize
+        SeekBar mSeekbar2 = (SeekBar) findViewById(R.id.freqSeekBar2);
+        mSeekbar2.setProgress(0);
+        writeNewFreq(1);
+        mSeekbar2.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener()
+        {
+            public void onProgressChanged(SeekBar seekBar2, int progress2, boolean fromUser2)
+            {
+                int newFreq2 = progress2 + MIN_FREQ;
+                freq_status_view2.setText("Number of Harmonies: " + Integer.toString(newFreq2));
+                writeNewFreq2(newFreq2);
+            }
+
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
     }
     @Override
     protected void onDestroy() {
@@ -258,4 +280,5 @@ public class MainActivity extends Activity
     public static native void stopPlay();
 
     public static native void writeNewFreq(int freq);
+    public static native void writeNewFreq2(int freq2);
 }

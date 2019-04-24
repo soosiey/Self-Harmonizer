@@ -13,12 +13,78 @@
 #include <cstdlib>
 #include <iterator>
 #include <complex>
+#include <map>
+#include <string>
 
 // JNI Function
 extern "C" {
 JNIEXPORT void JNICALL
 Java_com_ece420_lab5_MainActivity_writeNewFreq(JNIEnv *env, jclass, jint);
+JNIEXPORT void JNICALL
+Java_com_ece420_lab5_MainActivity_writeNewFreq2(JNIEnv *env, jclass, jint);
 }
+
+//Dictionary for Notes
+std::map<std::string, int> notesFreq = {{"B0",31},{"C1",33},{"C#1",35},{"D1",37},{"D#1",39},{"E1",41},{"F1",44},{"F#1",46},
+                                   {"G1",49},{"G#1",52},{"A1",55},{"A#1",58},{"B1",62},{"C2",65},{"C#2",69},{"D2",73},
+                                   {"D#2",78},{"E2",82},{"F2",87},{"F#2",93},{"G2",98},{"G#2",104},{"A2",110},{"A#2",117},
+                                   {"B2",123},{"C3",131},{"C#3",139},{"D3",147},{"D#3",156},{"E3",165},{"F3",175},{"F#3",185},
+                                   {"G3",196},{"G#3",208},{"A3",220},{"A#3",233},{"B3",247},{"C4",262},{"C#4",277},{"D4",294},
+                                   {"D#4",311},{"E4",330},{"F4",349},{"F#4",370},{"G4",392},{"G#4",415},{"A4",440},{"A#4",466},
+                                   {"B4",494},{"C5",523}};
+
+// Dictionary for Circle of Fifths
+std::map<std::string, std::map<std::map<std::string, int>, std::map<std::string, std::string>,std::map<std::string, std::string>>> circleFifths = {{"B0",{{"F",31},{"Next", "F#1"},{"Prev","E4"}}},
+{"C1",{{"F",33},{"Next", "G1"},{"Prev", "F4"}}},
+{"C#1",{{"F",35},{"Next","G#1"},{"Prev","F#4"}}},
+{"D1",{{"F",37},{"Next","A1"},{"Prev","G4"}}},
+{"D#1",{{"F",39},{"Next","A#1"},{"Prev","G#4"}}},
+{"E1",{{"F",41},{"Next", "B1"},{"Prev","A4"}}},
+{"F1",{{"F",44},{"Next", "C2"},{"Prev","A#4"}}},
+{"F#1",{{"F",46},{"Next","C#2"},{"Prev","B0"}}},
+{"G1",{{"F",49},{"Next","D2"},{"Prev", "C1"}}},
+{"G#1",{{"F",52},{"Next","D#2"},{"Prev", "C#1"}}},
+{"A1",{{"F", 55},{"Next","E2"},{"Prev","D1"}}},
+{"A#1",{{"F",58},{"Next","F2"},{"Prev","D#1"}}},
+{"B1",{{"F",62},{"Next","F#2"},{"Prev","E1"}}},
+{"C2",{{"F",65},{"Next","G2"},{"Prev","F1"}}},
+{"C#2",{{"F",69},{"Next","G#2"},{"Prev","F#1"}}},
+{"D2",{{"F",73},{"Next","A2"},{"Prev","G1"}}},
+{"D#2",{{"F",78},{"Next","A#2"},{"Prev", "G#1"}}},
+{"E2",{{"F",82},{"Next","B2"},{"Prev","A1"}}},
+{"F2",{{"F",87},{"Next","C3"},{"Prev","A#1"}}},
+{"F#2",{{"F",93},{"Next","C#3"},{"Prev","B1"}}},
+{"G2",{{"F",98},{"Next","D3"},{"Prev","C2"}}},
+{"G#2",{{"F",104},{"Next","D#3"},{"Prev","C#2"}}},
+{"A2",{{"F",110},{"Next","E3"},{"Prev","D2"}}},
+{"A#2",{{"F",117},{"Next","F3"},{"Prev","D#2"}}},
+{"B2",{{"F",123},{"Next", "F#3"},{"Prev","E2"}}},
+{"C3",{{"F",131},{"Next", "G3"},{"Prev", "F2"}}},
+{"C#3",{{"F",139},{"Next","G#3"},{"Prev","F#2"}}},
+{"D3",{{"F",147},{"Next","A3"},{"Prev","G2"}}},
+{"D#3",{{"F",156},{"Next","A#3"},{"Prev","G#2"}}},
+{"E3",{{"F",165},{"Next","B3"},{"Prev","A2"}}},
+{"F3",{{"F",175},{"Next","C4"},{"Prev","A#2"}}},
+{"F#3",{{"F",185},{"Next","C#4"},{"Prev","B2"}}},
+{"G3",{{"F",196},{"Next","D4"},{"Prev","C3"}}},
+{"G#3",{{"F",208},{"Next", "D#4"},{"Prev","C#3"}}},
+{"A3",{{"F",220},{"Next","E4"},{"Prev","D3"}}},
+{"A#3",{{"F",233},{"Next","F4"},{"Prev","D#3"}}},
+{"B3",{{"F",247},{"Next","F#4"},{"Prev","E3"}}},
+{"C4",{{"F",262},{"Next","G4"},{"Prev","F3"}}},
+{"C#4",{{"F",277},{"Next","G#4"},{"Prev","F#3"}}},
+{"D4",{{"F",294},{"Next","A4"},{"Prev","G3"}}},
+{"D#4",{{"F",311},{"Next","A#4"},{"Prev","G#3"}}},
+{"E4",{{"F",330},{"Next","B4"},{"Prev","A3"}}},
+{"F4",{{"F",349},{"Next","C5"},{"Prev","A#3"}}},
+{"F#4",{{"F",370},{"Next","C#1"},{"Prev","B3"}}},
+{"G4",{{"F",392},{"Next","D1"},{"Prev","C4"}}},
+{"G#4",{{"F",415},{"Next","D#1"},{"Prev","C#4"}}},
+{"A4",{{"F",440},{"Next","E1"},{"Prev","D4"}}},
+{"A#4",{{"F",466},{"Next","F1"},{"Prev","D#4"}}},
+{"B4",{{"F",494},{"Next","F#1"},{"Prev","E4"}}},
+{"C5",{{"F",523},{"Next","G1"},{"Prev","F4"}}}};
+
 
 // Student Variables
 #define EPOCH_PEAK_REGION_WIGGLE 30
@@ -33,6 +99,7 @@ int newEpochIdx = FRAME_SIZE;
 // We have two variables here to ensure that we never change the desired frequency while
 // processing a frame. Thread synchronization, etc. Setting to 300 is only an initializer.
 int NumFifths = 1;
+int NumHarm = 1;
 int FREQ_NEW = 300;
 
 bool lab5PitchShift(float *bufferIn) {
@@ -258,7 +325,7 @@ int detectBufferPeriod(float *buffer) {
     if (retVal > 700) {
         return -1;
     }
-    FREQ_NEW=(int)((F_S/ipos)*1.5*NumFifths);
+    FREQ_NEW=(int)((F_S/ipos)*1.5*NumFifths*NumHarm);
     return ipos;
 
 }
@@ -321,8 +388,12 @@ void overlapAddArray(float *dest, float *src, int startIdx, int len) {
 }
 
 
-JNIEXPORT void JNICALL
-Java_com_ece420_lab5_MainActivity_writeNewFreq(JNIEnv *env, jclass, jint newFreq) {
+JNIEXPORT void JNICALL Java_com_ece420_lab5_MainActivity_writeNewFreq(JNIEnv *env, jclass, jint newFreq) {
     NumFifths = (int) newFreq;
+    return;
+}
+
+JNIEXPORT void JNICALL Java_com_ece420_lab5_MainActivity_writeNewFreq2(JNIEnv *env, jclass, jint newFreq2) {
+    NumHarm = (int) newFreq2;
     return;
 }
