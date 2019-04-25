@@ -110,6 +110,9 @@ bool lab5PitchShift(float *bufferIn) {
         // *********************** START YOUR CODE HERE  **************************** //
         int changeIdx=0;
         for (int k=0;k<NumHarm;k++){
+            if(k >= harmonies.size()){
+                break;
+            }
             FREQ_NEW=notesFreq[harmonies[k]];
             float bufferTemp[BUFFER_SIZE]={};
             int  new_epoch_spacing = F_S/FREQ_NEW;
